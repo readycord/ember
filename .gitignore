@@ -1,0 +1,11 @@
+.direnv
+
+# Editors / Platform specific
+.vscode
+*.iml
+.idea/
+.DS_Store
+
+# Rust
+**/target/
+**/*.rs.bk

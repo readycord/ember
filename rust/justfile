@@ -1,0 +1,19 @@
+# Show all available commands
+help:
+	@just --list
+
+# Run clippy to analyze your code
+check:
+	cargo clippy --all-features --all-targets -- -D warnings
+
+# Format your code
+fmt:
+	cargo +nightly fmt --all
+
+# Run tests
+test:
+	cargo test --all-features --all-targets --locked
+
+# Generate documentation
+doc:
+	cargo doc --all-features
