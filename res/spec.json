@@ -1,0 +1,7 @@
+[
+  { "name": "time", "bits": 41, "type": 1 },
+  { "name": "instance", "bits": 9 , "type": 2 },
+  { "name": "sequence", "bits": 11 , "type": 3 },
+  { "name": "magic", "bits":3 , "type": 4 }
+]
+
