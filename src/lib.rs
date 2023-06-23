@@ -6,7 +6,6 @@ use {
 		time::{SystemTime, UNIX_EPOCH},
 	},
 	wasm_bindgen::prelude::*,
-	js_sys,
 };
 
 const EMBER_EPOCH: u128 = 1_682_899_200_000;
