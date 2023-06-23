@@ -16,7 +16,7 @@ fmt:
 
 # Run tests
 test:
-	cargo test --workspace --all-features
+	cargo test --workspace --all-features -- --nocapture
 
 # Generate documentation
 doc:
