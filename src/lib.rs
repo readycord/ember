@@ -62,8 +62,8 @@ impl EmberIDGenerator {
 			id: std::mem::ManuallyDrop::new(
 				PackedEmberID::new()
 					.with_timestamp(timestamp as u64)
-					.with_node_id(self.node_id as u16)
-					.with_sequence(self.sequence as u16)
+					.with_node_id(self.node_id)
+					.with_sequence(self.sequence)
 					.with_magic(magic),
 			),
 		};
