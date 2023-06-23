@@ -75,7 +75,7 @@ impl EmberIDGenerator {
 			self.sequence = 0;
 		}
 		// timestamp increases by MS
-		if timestamp >= self.last_timestamp {
+		if timestamp > self.last_timestamp {
 			self.sequence = 0;
 		}
 
@@ -107,6 +107,7 @@ mod tests {
 	fn ember() {
 		let mut generator = EmberIDGenerator::new(0);
 		let x = generator.next(0);
+		let x = generator.next(2);
 		unsafe {
 			let unpacked = decode_ember_id(x.ember);
 			println!("{}", x);
