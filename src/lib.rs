@@ -1,3 +1,5 @@
+#![allow(unused)] // TODO: remove
+
 use modular_bitfield::prelude::*;
 
 const EMBER_EPOCH: u64 = 1_682_899_200;
@@ -19,16 +21,15 @@ impl EmberID {
 		// take unix time now and subtract it from the epoch
 		// this will give us the number of seconds since the epoch
 		Self {
-			id: PackedEmberID::new()
+			id: PackedEmberID::new(),
 		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+	use super::*;
 
-    #[test]
-    fn ember() {
-    }
+	#[test]
+	fn ember() {}
 }
