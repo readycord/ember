@@ -2,9 +2,11 @@
 help:
 	@just --list
 
-# Compile and run the program in dev mode
-dev:
-	cargo run
+# Build the project
+build:
+	cargo build --release --all-features
+	wasm-pack build --release --out-name ember --out-dir ./js/pkgs
+	node ./js/fix-npm.js
 
 # Run clippy to analyze your code
 check:

@@ -1,10 +1,12 @@
-#![allow(unused)] // TODO: remove
+#![allow(dead_code)] // TODO: remove me
 use {
 	modular_bitfield::prelude::*,
 	std::{
 		fmt,
 		time::{SystemTime, UNIX_EPOCH},
 	},
+	wasm_bindgen::prelude::*,
+	js_sys,
 };
 
 const EMBER_EPOCH: u128 = 1_682_899_200_000;
@@ -17,7 +19,7 @@ struct PackedEmberID {
 	magic: B3,
 }
 
-union EmberID {
+pub union EmberID {
 	id: std::mem::ManuallyDrop<PackedEmberID>,
 	ember: u64,
 }
@@ -26,23 +28,14 @@ impl fmt::Display for EmberID {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { unsafe { write!(f, "{}", self.ember) } }
 }
 
-#[derive(Debug)]
-struct UnpackedEmberID {
-	timestamp: u64,
-	unix_timestamp: u128,
-	node_id: u16,
-	sequence: u16,
-	magic: u8,
-}
-
-struct EmberIDGenerator {
+pub struct EmberIDGenerator {
 	node_id: u16,
 	sequence: u16,
 	last_timestamp: u128,
 }
 
 impl EmberIDGenerator {
-	fn new(node_id: u16) -> Self {
+	pub fn new(node_id: u16) -> Self {
 		Self {
 			node_id,
 			sequence: 0,
@@ -53,12 +46,12 @@ impl EmberIDGenerator {
 		}
 	}
 
-	fn next(&mut self, magic: u8) -> EmberID {
+	pub fn next(&mut self, magic: u8) -> EmberID {
 		let timestamp =
 			SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_millis()
 				- EMBER_EPOCH;
 
-		let mut ember = EmberID {
+		let ember = EmberID {
 			id: std::mem::ManuallyDrop::new(
 				PackedEmberID::new()
 					.with_timestamp(timestamp as u64)
@@ -84,8 +77,39 @@ impl EmberIDGenerator {
 	}
 }
 
-fn decode_ember_id(ember: u64) -> UnpackedEmberID {
-	let mut ember = EmberID {
+#[derive(Debug)]
+#[wasm_bindgen]
+#[repr(C)]
+pub struct UnpackedEmberID {
+	timestamp: u64,
+	unix_timestamp: u128,
+	node_id: u16,
+	sequence: u16,
+	magic: u8,
+}
+
+#[wasm_bindgen]
+pub fn get_epoch_time(ember: &UnpackedEmberID) -> u64 { ember.timestamp }
+
+#[wasm_bindgen]
+pub fn get_time(ember: &UnpackedEmberID) -> js_sys::Date {
+	JsValue::bigint_from_str(ember.unix_timestamp.to_string().as_str());
+	js_sys::Date::new(&JsValue::from_f64(ember.unix_timestamp as f64))
+}
+
+#[wasm_bindgen]
+pub fn get_node(ember: &UnpackedEmberID) -> u16 { ember.node_id }
+
+#[wasm_bindgen]
+pub fn get_sequence(ember: &UnpackedEmberID) -> u16 { ember.sequence }
+
+#[wasm_bindgen]
+pub fn get_magic(ember: &UnpackedEmberID) -> u8 { ember.magic }
+
+// this will be used by the client to extract the information needed from ember
+#[wasm_bindgen]
+pub fn decode_ember_id(ember: u64) -> UnpackedEmberID {
+	let ember = EmberID {
 		ember,
 	};
 	unsafe {
@@ -106,7 +130,7 @@ mod tests {
 	#[test]
 	fn ember() {
 		let mut generator = EmberIDGenerator::new(0);
-		let x = generator.next(0);
+		let _x = generator.next(0);
 		let x = generator.next(2);
 		unsafe {
 			let unpacked = decode_ember_id(x.ember);

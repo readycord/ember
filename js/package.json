@@ -1,0 +1,12 @@
+{
+  "name": "js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --experimental-wasm-modules index.js"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC"
+}
