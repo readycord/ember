@@ -96,6 +96,27 @@ pub struct UnpackedEmberID {
 	magic: u8,
 }
 
+impl From<UnpackedEmberID> for u64 {
+	fn from(ember: UnpackedEmberID) -> Self {
+		unsafe {
+			let ember = EmberID {
+				id: std::mem::ManuallyDrop::new(
+					PackedEmberID::new()
+						.with_timestamp(ember.timestamp)
+						.with_node_id(ember.node_id)
+						.with_sequence(ember.sequence)
+						.with_magic(ember.magic),
+				),
+			};
+			ember.ember
+		}
+	}
+}
+
+impl From<u64> for UnpackedEmberID {
+	fn from(ember: u64) -> Self { decode_ember_id(ember) }
+}
+
 #[wasm_bindgen]
 pub fn get_epoch_time(ember: &UnpackedEmberID) -> u64 { ember.timestamp }
 
@@ -131,6 +152,7 @@ pub fn decode_ember_id(ember: u64) -> UnpackedEmberID {
 	}
 }
 
+// TODO: Proper testing and documentation
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -144,6 +166,17 @@ mod tests {
 			let unpacked = decode_ember_id(x.ember);
 			println!("{}", x);
 			println!("{:?}", unpacked);
+			//
+			// test the UnpackedEmber Traits
+			let unpacked = UnpackedEmberID::from(x.ember);
+			assert_eq!(unpacked.timestamp, x.id.timestamp());
+			assert_eq!(unpacked.node_id, x.id.node_id());
+			assert_eq!(unpacked.sequence, x.id.sequence());
+			assert_eq!(unpacked.magic, x.id.magic());
+
+			let ember: u64 = unpacked.into();
+			assert_eq!(ember, x.ember);
 		}
+
 	}
 }
