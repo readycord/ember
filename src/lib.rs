@@ -11,6 +11,7 @@ use {
 const EMBER_EPOCH: u128 = 1_682_899_200_000;
 
 #[bitfield]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct PackedEmberID {
 	timestamp: B41,
 	node_id: B9,
@@ -18,15 +19,23 @@ struct PackedEmberID {
 	magic: B3,
 }
 
+#[derive(Clone, Copy)]
 pub union EmberID {
 	id: std::mem::ManuallyDrop<PackedEmberID>,
 	ember: u64,
 }
 
-impl fmt::Display for EmberID {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { unsafe { write!(f, "{}", self.ember) } }
+impl fmt::Debug for EmberID {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		unsafe { write!(f, "{}", self.ember) }
+	}
 }
 
+impl fmt::Display for EmberID {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{self:?}") }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct EmberIDGenerator {
 	node_id: u16,
 	sequence: u16,
@@ -76,7 +85,7 @@ impl EmberIDGenerator {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[wasm_bindgen]
 #[repr(C)]
 pub struct UnpackedEmberID {
