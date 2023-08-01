@@ -1,182 +1,69 @@
-#![allow(dead_code)] // TODO: remove me
-use {
-	modular_bitfield::prelude::*,
-	std::{
-		fmt,
-		time::{SystemTime, UNIX_EPOCH},
-	},
-	wasm_bindgen::prelude::*,
-};
+use wasm_bindgen::prelude::wasm_bindgen;
 
-const EMBER_EPOCH: u128 = 1_682_899_200_000;
-
-#[bitfield]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct PackedEmberID {
-	timestamp: B41,
-	node_id: B9,
-	sequence: B11,
-	magic: B3,
-}
-
-#[derive(Clone, Copy)]
-pub union EmberID {
-	id: std::mem::ManuallyDrop<PackedEmberID>,
-	ember: u64,
-}
-
-impl fmt::Debug for EmberID {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		unsafe { write!(f, "{}", self.ember) }
-	}
-}
-
-impl fmt::Display for EmberID {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{self:?}") }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct EmberIDGenerator {
-	node_id: u16,
-	sequence: u16,
-	last_timestamp: u128,
-}
-
-impl EmberIDGenerator {
-	pub fn new(node_id: u16) -> Self {
-		Self {
-			node_id,
-			sequence: 0,
-			last_timestamp: SystemTime::now()
-				.duration_since(UNIX_EPOCH)
-				.expect("Time went backwards")
-				.as_millis() - EMBER_EPOCH,
-		}
-	}
-
-	pub fn next(&mut self, magic: u8) -> EmberID {
-		let timestamp =
-			SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_millis()
-				- EMBER_EPOCH;
-
-		let ember = EmberID {
-			id: std::mem::ManuallyDrop::new(
-				PackedEmberID::new()
-					.with_timestamp(timestamp as u64)
-					.with_node_id(self.node_id)
-					.with_sequence(self.sequence)
-					.with_magic(magic),
-			),
-		};
-
-		// sequence resets every ms, so we need to increment it here and if a new ms has started,
-		// reset it
-		self.sequence += 1;
-		if self.sequence >= 1023 {
-			self.sequence = 0;
-		}
-		// timestamp increases by MS
-		if timestamp > self.last_timestamp {
-			self.sequence = 0;
-		}
-
-		self.last_timestamp = timestamp;
-		ember
-	}
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[wasm_bindgen]
-#[repr(C)]
-pub struct UnpackedEmberID {
-	timestamp: u64,
-	unix_timestamp: u128,
-	node_id: u16,
-	sequence: u16,
-	magic: u8,
-}
-
-impl From<UnpackedEmberID> for u64 {
-	fn from(ember: UnpackedEmberID) -> Self {
-		unsafe {
-			let ember = EmberID {
-				id: std::mem::ManuallyDrop::new(
-					PackedEmberID::new()
-						.with_timestamp(ember.timestamp)
-						.with_node_id(ember.node_id)
-						.with_sequence(ember.sequence)
-						.with_magic(ember.magic),
-				),
-			};
-			ember.ember
-		}
-	}
-}
-
-impl From<u64> for UnpackedEmberID {
-	fn from(ember: u64) -> Self { decode_ember_id(ember) }
-}
-
-#[wasm_bindgen]
-pub fn get_epoch_time(ember: &UnpackedEmberID) -> u64 { ember.timestamp }
-
-#[wasm_bindgen]
-pub fn get_time(ember: &UnpackedEmberID) -> js_sys::Date {
-	JsValue::bigint_from_str(ember.unix_timestamp.to_string().as_str());
-	js_sys::Date::new(&JsValue::from_f64(ember.unix_timestamp as f64))
-}
-
-#[wasm_bindgen]
-pub fn get_node(ember: &UnpackedEmberID) -> u16 { ember.node_id }
-
-#[wasm_bindgen]
-pub fn get_sequence(ember: &UnpackedEmberID) -> u16 { ember.sequence }
-
-#[wasm_bindgen]
-pub fn get_magic(ember: &UnpackedEmberID) -> u8 { ember.magic }
-
-// this will be used by the client to extract the information needed from ember
-#[wasm_bindgen]
-pub fn decode_ember_id(ember: u64) -> UnpackedEmberID {
-	let ember = EmberID {
-		ember,
-	};
-	unsafe {
-		UnpackedEmberID {
-			timestamp: ember.id.timestamp(),
-			unix_timestamp: ember.id.timestamp() as u128 + EMBER_EPOCH,
-			node_id: ember.id.node_id(),
-			sequence: ember.id.sequence(),
-			magic: ember.id.magic(),
-		}
-	}
-}
-
-// TODO: Proper testing and documentation
 #[cfg(test)]
-mod tests {
-	use super::*;
+mod tests;
 
-	#[test]
-	fn ember() {
-		let mut generator = EmberIDGenerator::new(0);
-		let _x = generator.next(0);
-		let x = generator.next(2);
-		unsafe {
-			let unpacked = decode_ember_id(x.ember);
-			println!("{}", x);
-			println!("{:?}", unpacked);
-			//
-			// test the UnpackedEmber Traits
-			let unpacked = UnpackedEmberID::from(x.ember);
-			assert_eq!(unpacked.timestamp, x.id.timestamp());
-			assert_eq!(unpacked.node_id, x.id.node_id());
-			assert_eq!(unpacked.sequence, x.id.sequence());
-			assert_eq!(unpacked.magic, x.id.magic());
+pub mod wasm;
+pub use wasm::*;
 
-			let ember: u64 = unpacked.into();
-			assert_eq!(ember, x.ember);
-		}
+/// May 1st 2023 00:00. This is the beginning of time for Ember.
+pub const EMBER_EPOCH: u128 = 1_682_899_200_000;
 
+#[repr(C)]
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct EmberID(packed::PackedEmberID);
+
+impl EmberID {
+	/// Generates a new [`EmberID`].
+	pub const fn new() -> Self {
+		todo!();
+	}
+
+	/// Milliseconds that have elapsed since the [`EMBER_EPOCH`].
+	pub const fn timestamp(&self) -> u64 {
+		todo!();
+	}
+
+	/// The node this [`EmberID`] belongs to.
+	pub const fn node_id(&self) -> u16 {
+		todo!();
+	}
+
+	pub const fn sequence(&self) -> u16 {
+		todo!();
+	}
+
+	pub const fn magic(&self) -> u8 {
+		todo!();
+	}
+}
+
+impl From<u64> for EmberID {
+	fn from(value: u64) -> Self {
+		todo!();
+	}
+}
+
+impl From<EmberID> for u64 {
+	fn from(ember_id: EmberID) -> Self {
+		todo!();
+	}
+}
+
+#[allow(dead_code)]
+mod packed {
+	use modular_bitfield::{
+		bitfield,
+		specifiers::{B11, B3, B41, B9},
+	};
+
+	#[bitfield]
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+	pub(crate) struct PackedEmberID {
+		pub(crate) timestamp: B41,
+		pub(crate) node_id: B9,
+		pub(crate) sequence: B11,
+		pub(crate) magic: B3,
 	}
 }
