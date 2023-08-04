@@ -3,10 +3,21 @@ name = "ember"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+serde = ["dep:serde"]
+sqlx = ["dep:sqlx"]
+
 [dependencies]
 js-sys = "0.3.64"
 modular-bitfield = "0.11.2"
 wasm-bindgen = "0.2.87"
+
+serde = { version = "1", optional = true }
+sqlx = { version = "0.7", features = [
+	"runtime-tokio",
+	"tls-rustls",
+	"postgres",
+], optional = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

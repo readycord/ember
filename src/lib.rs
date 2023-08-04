@@ -12,11 +12,13 @@ pub const EMBER_EPOCH: u128 = 1_682_899_200_000;
 #[repr(C)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
+#[cfg_attr(feature = "sqlx", sqlx(type_name = "EmberID", transparent, no_pg_array))]
 pub struct EmberID(packed::PackedEmberID);
 
 impl EmberID {
 	/// Generates a new [`EmberID`].
-	pub const fn new() -> Self {
+	pub const fn new(/* ??? */) -> Self {
 		todo!();
 	}
 
@@ -45,9 +47,29 @@ impl From<u64> for EmberID {
 	}
 }
 
+impl From<i64> for EmberID {
+	fn from(value: i64) -> Self {
+		todo!();
+	}
+}
+
 impl From<EmberID> for u64 {
 	fn from(ember_id: EmberID) -> Self {
 		todo!();
+	}
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for EmberID {
+	fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+		u64::from(*self).serialize(serializer)
+	}
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for EmberID {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		u64::deserialize(deserializer).map(Into::into)
 	}
 }
 
