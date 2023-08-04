@@ -12,8 +12,6 @@ pub const EMBER_EPOCH: u128 = 1_682_899_200_000;
 #[repr(C)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
-#[cfg_attr(feature = "sqlx", sqlx(type_name = "EmberID", transparent, no_pg_array))]
 pub struct EmberID(packed::PackedEmberID);
 
 impl EmberID {
@@ -70,6 +68,22 @@ impl serde::Serialize for EmberID {
 impl<'de> serde::Deserialize<'de> for EmberID {
 	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		u64::deserialize(deserializer).map(Into::into)
+	}
+}
+
+#[cfg(feature = "sqlx")]
+impl<'r> sqlx::Decode<'r, sqlx::Postgres> for EmberID {
+	fn decode(
+		value: <sqlx::Postgres as sqlx::database::HasValueRef<'r>>::ValueRef,
+	) -> Result<Self, sqlx::error::BoxDynError> {
+		<i64 as sqlx::Decode<sqlx::Postgres>>::decode(value).map(Into::into)
+	}
+}
+
+#[cfg(feature = "sqlx")]
+impl sqlx::Type<sqlx::Postgres> for EmberID {
+	fn type_info() -> <sqlx::Postgres as sqlx::Database>::TypeInfo {
+		sqlx::postgres::PgTypeInfo::with_name("INT8")
 	}
 }
 
