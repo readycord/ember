@@ -181,10 +181,10 @@ pub mod packed {
 
 	#[bitfield]
 	#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-	pub(crate) struct PackedEmberID {
-		pub(crate) timestamp: B41,
-		pub(crate) node_id: B9,
-		pub(crate) sequence: B11,
-		pub(crate) magic: B3,
+	pub struct PackedEmberID {
+		pub timestamp: B41,
+		pub node_id: B9,
+		pub sequence: B11,
+		pub magic: B3,
 	}
 }
