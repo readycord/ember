@@ -173,7 +173,7 @@ impl sqlx::Type<sqlx::Postgres> for EmberID {
 }
 
 #[allow(dead_code)]
-mod packed {
+pub mod packed {
 	use modular_bitfield::{
 		bitfield,
 		specifiers::{B11, B3, B41, B9},
