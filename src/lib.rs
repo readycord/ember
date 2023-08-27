@@ -31,20 +31,24 @@ impl EmberID {
 
 	/// Milliseconds that have elapsed since the [`EMBER_EPOCH`].
 	pub fn timestamp(&self) -> u64 {
-		self.0.timestamp() as u64
+		self.0
+			.timestamp()
 	}
 
 	/// The node this [`EmberID`] belongs to.
 	pub fn node_id(&self) -> u16 {
-		self.0.node_id() as u16
+		self.0
+			.node_id()
 	}
 
 	pub fn sequence(&self) -> u16 {
-		self.0.sequence() as u16
+		self.0
+			.sequence()
 	}
 
 	pub fn magic(&self) -> u8 {
-		self.0.magic() as u8
+		self.0
+			.magic()
 	}
 }
 
@@ -101,7 +105,7 @@ impl From<u64> for EmberID {
 	fn from(value: u64) -> Self {
 		Self(
 			packed::PackedEmberID::new()
-				.with_timestamp(value as u64)
+				.with_timestamp(value)
 				.with_node_id(0)
 				.with_sequence(0)
 				.with_magic(0),
@@ -124,9 +128,14 @@ impl From<i64> for EmberID {
 impl From<EmberID> for u64 {
 	fn from(ember_id: EmberID) -> Self {
 		// get the bits from the packed struct
-		let packed = ember_id.0.into_bytes();
+		let packed = ember_id
+			.0
+			.into_bytes();
 		let mut value = 0;
-		for (i, byte) in packed.iter().enumerate() {
+		for (i, byte) in packed
+			.iter()
+			.enumerate()
+		{
 			value |= (*byte as u64) << (i * 8);
 		}
 		value
