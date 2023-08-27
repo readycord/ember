@@ -2,7 +2,7 @@ use {crate::EmberID, wasm_bindgen::prelude::wasm_bindgen};
 
 #[wasm_bindgen]
 pub fn decode(ember_id: u64) -> EmberID {
-	todo!();
+	EmberID::from(ember_id)
 }
 
 #[wasm_bindgen]
